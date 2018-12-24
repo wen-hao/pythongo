@@ -1,0 +1,411 @@
+from tkinter import *
+root=Tk()
+root.title=("围棋")
+c=Canvas(root,width=1100,height=900)
+c.pack()
+ottl=Label(root,width=7,height=1,text="Turn to")
+ottl.place(x=860,y=300)
+turnto=StringVar()
+turnto.set("BLACK")
+ottt=Entry(root,width=6,state='readonly',border=0,font=('Helvetica','11'))
+ottt.config(textvariable=turnto)
+ottt.place(x=915,y=300)
+
+advt=StringVar()
+advt.set("D4")
+ipt=Entry(root,width=15,textvariable=advt) #输入文本框
+ipt.place(x=870,y=330)
+
+tips=StringVar()
+tips.set("I will explain your error")
+adv=Entry(root,width=20,textvariable=tips,state='readonly')
+adv.place(x=860,y=560)#输出建议的结果
+
+
+covt=Entry(root)
+outcoming=StringVar()
+covt.config(textvariable=outcoming)#用于转换坐标形式的文本框
+def nextstep(string,turn):       #按搜索序列下一个子
+    outcoming.set(string)
+    ccol=covt.get()[0]
+    covt.delete(0,1)
+    crow=covt.get()
+    ncol=countcol(ccol)
+    nrow=19-int(crow)       #将棋盘坐标转换成矩阵坐标
+    if 0<=ncol<=18 and 0<=nrow<=18 and s.board[ncol][nrow]==0:
+        if turn%2==1:
+            s.tb(ncol,nrow)
+        else:
+            s.tw(ncol,nrow)
+
+
+
+collist=['A','B','C','D','E','F','G','H','J','K','L',\
+     'M','N','O','P','Q','R','S','T','Z']
+searchlist=[['D4','C4','C3','D3','E3','E4','E5','D5','C5','B5','B4','B3','B2','C2','D2','E2','F2','F3','F4',\
+'F5','F6','E6','D6','C6','B6','A6','A5','A4','A3','A2','A1','B1','C1','D1','E1','F1','G1','G2',\
+'G3','G4','G5','G6'],[\
+'Q4','Q3','R3','R4','R5','Q5','P5','P4','P3','P2','Q2','R2','S2','S3','S4','S5','S6','R6','Q6',\
+'P6','O6','O5','O4','O3','O2','O1','P1','Q1','R1','S1','T1','T2','T3','T4','T5','T6','T7','S7',\
+'R7','Q7','P7','O7'],[\
+'D16','D17','C17','C16','C15','D15','E15','E16','E17','E18','D18','C18','B18','B17','B16','B15','B14','C14','D14',\
+'E14','F14','F15','F16','F17','F18','F19','E19','D19','C19','B19','A19','A18','A17','A16','A15','A14','A13','B13',\
+'C13','D13','E13','F13'],[\
+'Q16','R16','R17','Q17','P17','P16','P15','Q15','R15','S15','S16','S17','S18','R18','Q18','P18','O18','O17','O16',\
+'O15','O14','P14','Q14','R14','S14','T14','T15','T16','T17','T18','T19','S19','R19','Q19','P19','O19','N19','N18',\
+'N17','N16','N15','N14'],[\
+'D10','C10','C9','D9','E9','E10','E11','D11','C11','B11','B10','B9','B8','C8','D8','E8','F8','F9','F10',\
+'F11','F12','E12','D12','C12','B12','A12','A11','A10','A9','A8','A7','B7','C7','D7','E7','F7','G7','G8',\
+'G9','G10','G11','G12'],[\
+'Q10','R10','R11','Q11','P11','P10','P9','Q9','R9','S9','S10','S11','S12','R12','Q12','P12','O12','O11','O10',\
+'O9','O8','P8','Q8','R8','S8','T8','T9','T10','T11','T12','T13','S13','R13','Q13','P13','O13','N13','N12',\
+'N11','N10','N9','N8'],[\
+'K4','K3','L3','L4','L5','K5','J5','J4','J3','J2','K2','L2','M2','M3','M4','M5','M6','L6','K6',\
+'J6','H6','H5','H4','H3','H2','H1','J1','K1','L1','M1','N1','N2','N3','N4','N5','N6','N7','M7',\
+'L7','K7','J7','H7'],[\
+'K16','K17','J17','J16','J15','K15','L15','L16','L17','L18','K18','J18','H18','H17','H16','H15','H14','J14','K14',\
+'L14','M14','M15','M16','M17','M18','M19','L19','K19','J19','H19','G19','G18','G17','G16','G15','G14','G13','H13',\
+'J13','K13','L13','M13'],[\
+'H8','H9','H10','H11','H12','J12','K12','L12','M12','M11','M10','M9','M8','L8','K8','J8','J9','J10','J11',\
+'K11','L11','L10','L9','K9','K10'\
+,'Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10','Z10']]      #搜索顺序
+def maxmin(alpha,beta,depth,turn):#alpha-beta剪枝极大极小值搜索算法
+    save=[[0 for i in range(1,20)] for j in range(1,20)]    #保存当前局面
+    for i in range(0,19):
+        for j in range(0,19):
+            save[i][j]=s.board[i][j]
+    for i in range(0,9):
+        for j in range(0,42):
+            nextstep(searchlist[i][j],turn)
+            turn+=1
+            val=-maxmin2(-beta,-alpha,depth-1,turn)
+            if val>=beta:
+                turn-=1
+                return beta
+            if val>alpha:
+                alpha=val
+                advt.set(searchlist[i][j])
+            for j in range(0,19):
+                for k in range(0,19):
+                    s.board[j][k]=save[j][k]
+    turn-=1
+    return alpha
+def maxmin2(alpha,beta,depth,turn):
+    if depth==0:
+        recountval(s)
+        if turn==1:#若白棋刚走完
+            turn-=1
+            return s.val
+        else:
+            turn-=1
+            return -s.val
+    save=[[0 for i in range(1,20)] for j in range(1,20)]    #保存当前局面
+    for i in range(0,19):
+        for j in range(0,19):
+            save[i][j]=s.board[i][j]
+    for i in range(0,9):
+        for j in range(0,42):
+            nextstep(searchlist[(s.ing+i)%8][j],turn)
+            turn+=1
+            val=-maxmin2(-beta,-alpha,depth-1,turn)
+            if val>=beta:
+                turn-=1
+                return beta
+            if val>alpha:
+                alpha=val
+            for f in range(0,19):
+                for k in range(0,19):
+                    s.board[f][k]=save[f][k]
+    turn-=1
+    return alpha
+
+def countcol(colchar):  #计算字母的列数
+    for i in range(0,19):
+        if collist[i]==colchar:
+            return i
+    return 20
+
+#绘制初始棋盘
+def initc():
+    mat=c.create_rectangle(50,50,850,850,width=3,fill='burlywood')
+    #棋盘坐标
+    for i in range(1,20):
+        c.create_text(70,850-40*i,text=i)
+    for i in range(0,19):
+        c.create_text(90+40*i,70,text=collist[i])
+    for i in range(1,20):
+        c.create_line(90,50+40*i,810,50+40*i)
+    for i in range(1,20):
+        c.create_line(50+40*i,90,50+40*i,810)
+    D16=c.create_oval(207,207,213,213,fill='black')
+    D10=c.create_oval(207,447,213,453,fill='black')
+    D4=c.create_oval(207,687,213,693,fill='black')
+    K16=c.create_oval(447,207,453,213,fill='black')
+    K10=c.create_oval(447,447,453,453,fill='black')
+    K4=c.create_oval(447,687,453,693,fill='black')
+    Q16=c.create_oval(687,207,693,213,fill='black')
+    Q10=c.create_oval(687,447,693,453,fill='black')
+    Q4=c.create_oval(687,687,693,693,fill='black')
+#检查一个子的气：有子无气0，有子且有气1
+def check(s,col,row):
+    if s.board[col][row]==1 or s.board[col][row]==-1:#只检查未被标记的子的气
+        union=s.board[col][row]
+        s.board[col][row]<<=1
+        RES=0
+        if col>0:
+            if s.board[col-1][row]==0:
+                return 1
+            elif s.board[col-1][row]==union:
+                RES=max(RES,check(s,col-1,row))
+        if row>0:
+            if s.board[col][row-1]==0:
+                return 1
+            elif s.board[col][row-1]==union:
+                RES=max(RES,check(s,col,row-1))
+        if col<18:
+            if s.board[col+1][row]==0:
+                return 1
+            elif s.board[col+1][row]==union:
+                RES=max(RES,check(s,col+1,row))
+        if row<18:
+            if s.board[col][row+1]==0:
+                return 1
+            elif s.board[col][row+1]==union:
+                RES=max(RES,check(s,col,row+1))
+        return RES
+
+def execheck(s,num):
+    if num==1:
+        for i in range(0,19):
+            for j in range(0,19):
+                if s.board[i][j]==2 or s.board[i][j]==-2:
+                    s.board[i][j]>>=1
+
+    if num==0:
+        for i in range(0,19):
+            for j in range(0,19):
+                if s.board[i][j]==2 or s.board[i][j]==-2:
+                    s.board[i][j]=0
+def remakevaltable(s):
+    for i in range(0,19):
+        for j in range(0,19):
+            if s.board[i][j]==0:#若一个位置无子，搜索最近的子，将它的值复制给自己
+                val=0
+                if i>0:
+                    val+=s.board[i-1][j]
+                if j>0:
+                    val+=s.board[i][j-1]
+                if i<18:
+                    val+=s.board[i+1][j]
+                if j<18:
+                    val+=s.board[i][j+1]
+                if i>0 and j>0:
+                    val+=s.board[i-1][j-1]
+                if i<18 and j<18:
+                    val+=s.board[i+1][j+1]
+                if i<18 and j>0:
+                     val+=s.board[i+1][j-1]
+                if i>0 and j<18:
+                    val+=s.board[i-1][j+1]
+                if val>0:
+                    val=1
+                elif val<0:
+                    val=-1
+                else:       #只看周围一圈的点无法判断出此点的值
+                    if i>1:
+                        val+=s.board[i-2][j]
+                    if j>1:
+                        val+=s.board[i][j-2]
+                    if i<17:
+                        val+=s.board[i+2][j]
+                    if j<17:
+                        val+=s.board[i][j+2]
+                    if i<18 and j>1:
+                        val+=s.board[i+1][j-2]
+                    if i<17 and j>0:
+                        val+=s.board[i+2][j-1]
+                    if i<18 and j<17:
+                        val+=s.board[i+1][j+2]
+                    if i<17 and j<18:
+                        val+=s.board[i+2][j+1]
+                    if i>0 and j>1:
+                        val+=s.board[i-1][j-2]
+                    if i>1 and j>0:
+                        val+=s.board[i-2][j-1]
+                    if i>0 and j<17:
+                        val+=s.board[i-1][j+2]
+                    if i>1 and j<18:
+                        val+=s.board[i-2][j+1]
+                    if val>0:
+                        val=1
+                    elif val<0:
+                        val=-1
+                    else:   #两圈之内无法估值
+                        if i>2:
+                            val+=s.board[i-3][j]
+                        if j>2:
+                            val+=s.board[i][j-3]
+                        if i<16:
+                            val+=s.board[i+3][j]
+                        if j<16:
+                            val+=s.board[i][j+3]
+                        if i>2 and j>0:
+                            val+=s.board[i-3][j-1]
+                        if i>2 and j<18:
+                            val+=s.board[i-3][j+1]
+                        if i>0 and j>2:
+                            val+=s.board[i-1][j-3]
+                        if i>0 and j<16:
+                            val+=s.board[i-1][j+3]
+                        if i<18 and j>2:
+                            val+=s.board[i+1][j-3]
+                        if i<18 and j<16:
+                            val+=s.board[i+1][j+3]
+                        if i<16 and j>0:
+                            val+=s.board[i+3][j-1]
+                        if i<16 and j<18:
+                            val+=s.board[i+3][j+1]
+                        if val>1:#至少需要2个子才能确定当前位置值
+                            val=1
+                        elif val<-1:
+                            val=-1
+                        else:
+                            val=0
+                s.valtable[i][j]=val
+            else:#若有子则值确定
+                s.valtable[i][j]=s.board[i][j]
+#当前状态类
+initgive=-3.5   #初始时倒贴3.5目
+def recountval(s):
+        remakevaltable(s)
+        s.val=initgive
+        for i in range(0,19):
+            for j in range(0,19):
+                s.val+=s.valtable[i][j]
+class statement:
+    def __init__(self,c):
+        self.ing=0      #正在拼杀的地区
+        self.step=1
+        self.c=c    #绘图是状态的一个属性
+        self.board=[[0 for i in range(1,20)] for j in range(1,20)]
+        self.val=initgive   #计算当前目数
+        self.valtable=[[0 for i in range(1,20)] for j in range(1,20)]
+    def tb(self,col,row):   #黑棋落子
+        self.board[col][row]=1
+        if row>0 and self.board[col][row-1]==-1:
+            execheck(s,check(s,col,row-1))
+        if row<18 and self.board[col][row+1]==-1:
+            execheck(s,check(s,col,row+1))
+        if col>0 and self.board[col-1][row]==-1:
+            execheck(s,check(s,col-1,row))
+        if col<18 and self.board[col+1][row]==-1:
+            execheck(s,check(s,col+1,row))
+        execheck(s,check(s,col,row))
+    def tw(self,col,row):   #白棋落子
+        self.board[col][row]=-1
+        if row>0 and self.board[col][row-1]==1:
+            execheck(s,check(s,col,row-1))
+        if row<18 and self.board[col][row+1]==1:
+            execheck(s,check(s,col,row+1))
+        if col>0 and self.board[col-1][row]==1:
+            execheck(s,check(s,col-1,row))
+        if col<18 and self.board[col+1][row]==1:
+            execheck(s,check(s,col+1,row))
+        execheck(s,check(s,col,row))
+    def show(self):     #绘制当前状态
+        for i in range(0,19):
+            for j in range(0,19):
+                if self.board[i][j]==1:
+                    c.create_oval(75+i*40,75+j*40,105+i*40,105+j*40,fill='black')
+                elif self.board[i][j]==-1:
+                    c.create_oval(75+i*40,75+j*40,105+i*40,105+j*40,fill='white')
+        recountval(self)
+        print(self.val)
+
+
+initc()
+s=statement(c)
+
+#io
+def themain(event):
+    ccol=ipt.get()[0]
+    ipt.delete(0,1)
+    crow=ipt.get()
+    ncol=countcol(ccol)
+    nrow=19-int(crow)
+    ipt.delete(0,END)#将输入的棋盘坐标转换成矩阵坐标
+    if ncol<0 or ncol>18 or nrow<0 or nrow>18:
+        tips.set("the position didn't exist")
+    elif s.board[ncol][nrow]==0:
+        if ncol<7 and nrow>13:
+            s.ing=0
+        elif ncol>12 and nrow>11:
+            s.ing=1
+        elif ncol<6 and nrow<7:
+            s.ing=2
+        elif ncol>11 and nrow<6:
+            s.ing=3
+        elif ncol<7 and 6<nrow<13:
+            s.ing=4
+        elif ncol>11 and 5<nrow<12:
+            s.ing=5
+        elif 6<ncol<13and nrow>11:
+            s.ing=5
+        elif 5<ncol<12 and nrow<7:
+            s.ing=7
+        else:
+            s.ing=8
+        tips.set("I will explain your error")
+        if s.step%2==1:
+            turnto.set("WHITE")
+            s.tb(ncol,nrow)
+            maxmin(-400,400,2,s.step)
+        else:
+            turnto.set("BLACK")
+            s.tw(ncol,nrow)
+            maxmin(-400,400,2,s.step)
+        s.step+=1
+        initc()
+        s.show()
+    else:
+        tips.set("the position having go")
+
+ipt.bind("<Return>",themain)
+def checkmain(event):
+    ncol=int((event.x-80)/40)
+    nrow=int((event.y-80)/40)
+    if 0<=ncol<=18 and 0<=nrow<=18 and s.board[ncol][nrow]==0:
+        tips.set("I will explain your error")
+        if ncol<7 and nrow>13:
+            s.ing=0
+        elif ncol>12 and nrow>11:
+            s.ing=1
+        elif ncol<6 and nrow<7:
+            s.ing=2
+        elif ncol>11 and nrow<6:
+            s.ing=3
+        elif ncol<7 and 6<nrow<13:
+            s.ing=4
+        elif ncol>11 and 5<nrow<12:
+            s.ing=5
+        elif 6<ncol<13and nrow>11:
+            s.ing=5
+        elif 5<ncol<12 and nrow<7:
+            s.ing=7
+        else:
+            s.ing=8
+        if s.step%2==1:
+            turnto.set("WHITE")
+            s.tb(ncol,nrow)
+            maxmin(-400,400,2,s.step)
+        else:
+            turnto.set("BLACK")
+            s.tw(ncol,nrow)
+            maxmin(-400,400,2,s.step)
+        s.step+=1
+        initc()
+        s.show()
+    else:
+        tips.set("the position having go")
+c.bind("<Button-1>",checkmain)
+root.mainloop()
